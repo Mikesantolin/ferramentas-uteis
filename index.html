@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
     <title>Portal de Soluções Rápidas - V2</title>
     <style>
         :root {
@@ -147,6 +148,18 @@
             document.body.removeChild(link);
         }
     </script>
+
+    <head>
+    <meta charset="UTF-8">
+    <title>Encurtador de Links</title>
+</head>
+<body>
+    <h2>Encurtador de Links (Lista)</h2>
+    <textarea id="listaLinks" rows="10" cols="50" placeholder="Cole os links aqui, um por linha"></textarea><br>
+    <button onclick="processarLinks()">Encurtar Links</button>
+    
+    <h3>Resultado:</h3>
+    <textarea id="resultado" rows="10" cols="50" readonly></textarea>
 
     <script>
         async function processarLinks() {
