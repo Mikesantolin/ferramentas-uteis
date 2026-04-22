@@ -147,5 +147,30 @@
             document.body.removeChild(link);
         }
     </script>
+
+    <script>
+        async function processarLinks() {
+            const lista = document.getElementById('listaLinks').value.split('\n');
+            const resultadoArea = document.getElementById('resultado');
+            resultadoArea.value = ""; // Limpa resultados anteriores
+
+            for (let link of lista) {
+                if (link.trim() === "") continue;
+
+                try {
+                    // A chamada para o encurtador
+                    const resposta = await fetch(`http://facta.ly/_encurtador.php?url=${encodeURIComponent(link.trim())}`);
+                    const linkCurto = await resposta.text();
+                    resultadoArea.value += linkCurto + "\n";
+                } catch (error) {
+                    resultadoArea.value += "Erro ao encurtar: " + link + "\n";
+                }
+                
+                // Pequena pausa para não sobrecarregar
+                await new Promise(r => setTimeout(r, 500)); 
+            }
+            alert("Processo concluído!");
+        }
+    </script>
 </body>
 </html>
