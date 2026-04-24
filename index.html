@@ -28,22 +28,28 @@
 
         .main-content { flex-grow: 1; padding: 40px; }
         .header { margin-bottom: 30px; }
-        .card { background: var(--white); padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 800px; margin-bottom: 20px; }
+        .card { background: var(--white); padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 800px; margin-bottom: 30px; }
         
         .section-title { border-left: 4px solid var(--primary-color); padding-left: 10px; margin-bottom: 20px; color: var(--sidebar-color); }
 
         .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: var(--text-color); }
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
 
         .btn-container { display: flex; gap: 10px; margin-top: 10px; }
         button { flex: 1; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .btn-generate { background-color: var(--primary-color); color: white; }
+        .btn-secondary { background-color: var(--sidebar-color); color: white; }
         .btn-download { background-color: var(--accent-blue); color: white; display: none; }
         button:hover { opacity: 0.9; }
 
         .status-msg { margin-top: 15px; padding: 10px; border-radius: 4px; display: none; font-size: 0.9rem; }
         .status-success { background-color: #e8f5e9; color: #2e7d32; display: block; }
+
+        /* Utilitários para o layout do link individual */
+        .input-group { display: flex; gap: 10px; }
+        .input-group input { flex-grow: 1; }
+        .input-group button { flex-shrink: 0; flex-grow: 0; padding: 10px 20px; }
     </style>
 </head>
 <body>
@@ -52,7 +58,7 @@
         <h2>SOLUÇÕES LAB</h2>
         <nav>
             <ul>
-                <li><a href="#" class="active">WhatsApp em Lote</a></li>
+                <li><a href="#" class="active">WhatsApp Links</a></li>
                 <li><a href="#">Dashboard Performance</a></li>
             </ul>
         </nav>
@@ -60,12 +66,14 @@
 
     <div class="main-content">
         <div class="header">
-            <h1>Gerador de Links WhatsApp (Lote via CSV)</h1>
-            <p>Automatize a criação de links para listas de contatos comerciais.</p>
+            <h1>Gerador de Links WhatsApp</h1>
+            <p>Automatize a criação de links para contatos comerciais de forma individual ou em lote.</p>
         </div>
 
         <div class="card">
-            <h3 class="section-title">1. Configurações Gerais</h3>
+            <h3 class="section-title">Gerador em Lote (via CSV)</h3>
+            <p style="margin-bottom: 20px; font-size: 0.9rem; color: #666;">Crie links em massa enviando uma planilha CSV.</p>
+            
             <div class="form-group">
                 <label>Código do País</label>
                 <select id="countryCode">
@@ -74,11 +82,10 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>Mensagem Padrão</label>
+                <label>Mensagem Padrão (Opcional)</label>
                 <textarea id="globalMessage" placeholder="Olá, tudo bem?"></textarea>
             </div>
 
-            <h3 class="section-title">2. Upload da Base</h3>
             <div class="form-group">
                 <label>Selecione o CSV (Coluna 1 = Números)</label>
                 <input type="file" id="csvFile" accept=".csv">
@@ -91,9 +98,45 @@
 
             <div id="statusMsg" class="status-msg"></div>
         </div>
+
+        <div class="card">
+            <h3 class="section-title">Gerador Individual</h3>
+            <p style="margin-bottom: 20px; font-size: 0.9rem; color: #666;">Crie um link rápido para um único número.</p>
+            
+            <div class="form-group">
+                <label>Código do País</label>
+                <select id="singleCountryCode">
+                    <option value="55">Brasil (+55)</option>
+                    <option value="1">EUA (+1)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Número de Telefone (com DDD)</label>
+                <input type="text" id="singlePhone" placeholder="Ex: 51999999999">
+            </div>
+            <div class="form-group">
+                <label>Mensagem (Opcional)</label>
+                <textarea id="singleMessage" placeholder="Escreva a mensagem aqui..."></textarea>
+            </div>
+
+            <div class="btn-container" style="margin-bottom: 20px;">
+                <button class="btn-generate" onclick="generateSingleLink()">Gerar Link em Tela</button>
+            </div>
+
+            <div class="form-group">
+                <label>Resultado:</label>
+                <div class="input-group">
+                    <input type="text" id="singleResult" readonly placeholder="O link gerado aparecerá aqui...">
+                    <button class="btn-secondary" onclick="copySingleLink()">Copiar Link</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
+        // ==========================================
+        // LÓGICA DO GERADOR EM LOTE (CSV)
+        // ==========================================
         let processedData = "";
 
         function processCSV() {
@@ -119,7 +162,7 @@
                     if (index === 0 && isNaN(row.split(/[;,]/)[0])) return; // Pula cabeçalho se existir
 
                     const columns = row.split(/[;,]/); // Aceita vírgula ou ponto e vírgula
-                    let phone = columns[0].replace(/\D/g, '');
+                    let phone = columns[0].replace(/\D/g, ''); // Remove tudo que não for número
 
                     if (phone) {
                         const link = `https://wa.me/${country}${phone}${message ? '?text=' + message : ''}`;
@@ -147,42 +190,49 @@
             link.click();
             document.body.removeChild(link);
         }
-    </script>
 
-    <head>
-    <meta charset="UTF-8">
-    <title>Encurtador de Links</title>
-</head>
-<body>
-    <h2>Encurtador de Links (Lista)</h2>
-    <textarea id="listaLinks" rows="10" cols="50" placeholder="Cole os links aqui, um por linha"></textarea><br>
-    <button onclick="processarLinks()">Encurtar Links</button>
-    
-    <h3>Resultado:</h3>
-    <textarea id="resultado" rows="10" cols="50" readonly></textarea>
+        // ==========================================
+        // LÓGICA DO GERADOR INDIVIDUAL
+        // ==========================================
+        function generateSingleLink() {
+            const country = document.getElementById('singleCountryCode').value;
+            const phoneInput = document.getElementById('singlePhone').value;
+            const phone = phoneInput.replace(/\D/g, ''); // Remove tudo que não for número
+            const message = encodeURIComponent(document.getElementById('singleMessage').value);
+            
+            const resultField = document.getElementById('singleResult');
 
-    <script>
-        async function processarLinks() {
-            const lista = document.getElementById('listaLinks').value.split('\n');
-            const resultadoArea = document.getElementById('resultado');
-            resultadoArea.value = ""; // Limpa resultados anteriores
-
-            for (let link of lista) {
-                if (link.trim() === "") continue;
-
-                try {
-                    // A chamada para o encurtador
-                    const resposta = await fetch(`http://facta.ly/_encurtador.php?url=${encodeURIComponent(link.trim())}`);
-                    const linkCurto = await resposta.text();
-                    resultadoArea.value += linkCurto + "\n";
-                } catch (error) {
-                    resultadoArea.value += "Erro ao encurtar: " + link + "\n";
-                }
-                
-                // Pequena pausa para não sobrecarregar
-                await new Promise(r => setTimeout(r, 500)); 
+            if (!phone) {
+                alert("Por favor, insira um número de telefone.");
+                resultField.value = "";
+                return;
             }
-            alert("Processo concluído!");
+
+            // Monta o link
+            const link = `https://wa.me/${country}${phone}${message ? '?text=' + message : ''}`;
+            
+            // Exibe no input de resultado
+            resultField.value = link;
+        }
+
+        function copySingleLink() {
+            const resultField = document.getElementById('singleResult');
+            
+            if (!resultField.value) {
+                alert("Gere um link primeiro antes de copiar!");
+                return;
+            }
+
+            // Seleciona e copia o texto
+            resultField.select();
+            resultField.setSelectionRange(0, 99999); // Para dispositivos móveis
+            navigator.clipboard.writeText(resultField.value)
+                .then(() => {
+                    alert("Link copiado para a área de transferência!");
+                })
+                .catch(err => {
+                    console.error('Erro ao copiar o link: ', err);
+                });
         }
     </script>
 </body>
